@@ -1,0 +1,33 @@
+// Power Query M: import and normalize Procurement Schedule (Delivery)
+// Usage: In Excel Data > Get Data > From File > From Workbook, choose the procurement register file,
+// open Advanced Editor and replace with this code. Set `FilePath` if using direct File.Contents.
+
+let
+    // If you use this inside the template, change FilePath to the procurement file path or use the UI to pick file
+    FilePath = "C:\\Users\\Yingxue.Wang\\OneDrive - Laing ORourke\\Fun\\VS\\sw\\other\\Procurement Register - SPW.xlsx",
+    Source = Excel.Workbook(File.Contents(FilePath), null, true),
+    // adjust sheet name if necessary
+    RawSheet = try Source{[Item="Procurement Schedule (Delivery)",Kind="Sheet"]}[Data] otherwise Source{0}[Data],
+    Promoted = Table.PromoteHeaders(RawSheet, [PromoteAllScalars=true]),
+
+    // Find package and description columns (case-insensitive)
+    ColNames = Table.ColumnNames(Promoted),
+    PackageCol = List.First(List.Select(ColNames, each Text.Contains(_, "package", Comparer.OrdinalIgnoreCase)), "Package ID"),
+    DescCol = List.First(List.Select(ColNames, each Text.Contains(_, "description", Comparer.OrdinalIgnoreCase) or Text.Contains(_, "desc", Comparer.OrdinalIgnoreCase)), "Package Description"),
+
+    // Identify date/event columns (planned, actual, forecast, or any column containing a date-like header)
+    DateIndicators = {"planned","actual","forecast","date"},
+    IsDateColumn = (c) => List.AnyTrue(List.Transform(DateIndicators, (s) => Text.Contains(c, s, Comparer.OrdinalIgnoreCase))),
+    DateCols = List.Select(ColNames, each IsDateColumn(_)),
+
+    // Keep key cols + any date/event cols
+    KeepCols = List.Distinct(List.Combine({{PackageCol, DescCol}, DateCols})),
+    Kept = Table.SelectColumns(Promoted, KeepCols, MissingField.UseNull),
+
+    // Unpivot date columns so each package/event/date is a row
+    Unpivoted = Table.UnpivotOtherColumns(Kept, {PackageCol, DescCol}, "Event", "EventDate"),
+
+    // Try to convert EventDate to proper date/time
+    ChangedTypes = Table.TransformColumnTypes(Unpivoted, { {"EventDate", type date} }, "en-GB")
+in
+    ChangedTypes
