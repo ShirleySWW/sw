@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Password Generator</title>
+        <link rel="stylesheet" href="index.css">
+        <script src="index.js" defer></script>
+    </head>
+
+    <body>
+
+        <h1 class="wtext size1">Generate a</h1>
+        <h1 class="gtext size1">random password</h1>
+        <p class="wtext size2">Never use an insecure password again.</p>
+        <div class="switches">
+            <label class="switch1 wtext"> <input type="checkbox" id="numbersToggle"> <span class="slider_round"></span><span class="switch_text">incl. numbers</span></label>
+            <label class="switch2 wtext"> <input type="checkbox" id="symbolsToggle"> <span class="slider_round"></span><span class="switch_text">incl. symbols</span></label>
+        </div>
+        <input type="number" placeholder = "Set Password Length" id="pswlen">
+        
+        <button class="wtext size3" id="clickbutton" onclick = "generatePassword()">Generate passwords</button>
+        <div class="line"></div>
+        <div class="gtext size3 displaybox">
+            <div class="results" id="result1" onclick = "copy1()"></div>
+            <div class="results" id="result2" onclick = "copy2()"></div>
+        </div>
+    </body>
+</html>
